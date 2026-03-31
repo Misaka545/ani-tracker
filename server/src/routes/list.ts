@@ -12,9 +12,9 @@ import {
 export const listRoutes = new Elysia({ prefix: "/api/list" })
   .get(
     "/",
-    ({ query }) => {
+    async ({ query }) => {
       const status = query.status || "all";
-      const items = getListByStatus(status);
+      const items = await getListByStatus(status);
       const parsed = items.map((item: any) => ({
         ...item,
         genres: JSON.parse(item.genres || "[]"),
@@ -26,7 +26,7 @@ export const listRoutes = new Elysia({ prefix: "/api/list" })
           },
         },
       }));
-      return { data: parsed, counts: getStatusCounts() };
+      return { data: parsed, counts: await getStatusCounts() };
     },
     {
       query: t.Object({
@@ -37,8 +37,8 @@ export const listRoutes = new Elysia({ prefix: "/api/list" })
 
   .get(
     "/:id",
-    ({ params }) => {
-      const item = getAnimeFromList(Number(params.id));
+    async ({ params }) => {
+      const item = await getAnimeFromList(Number(params.id));
       return { data: item, inList: !!item };
     },
     {
@@ -48,9 +48,9 @@ export const listRoutes = new Elysia({ prefix: "/api/list" })
 
   .post(
     "/",
-    ({ body }) => {
-      addToList(body.anime, body.status);
-      return { success: true, counts: getStatusCounts() };
+    async ({ body }) => {
+      await addToList(body.anime, body.status);
+      return { success: true, counts: await getStatusCounts() };
     },
     {
       body: t.Object({
@@ -62,9 +62,9 @@ export const listRoutes = new Elysia({ prefix: "/api/list" })
 
   .patch(
     "/:id",
-    ({ params, body }) => {
-      updateStatus(Number(params.id), body.status);
-      return { success: true, counts: getStatusCounts() };
+    async ({ params, body }) => {
+      await updateStatus(Number(params.id), body.status);
+      return { success: true, counts: await getStatusCounts() };
     },
     {
       params: t.Object({ id: t.String() }),
@@ -74,9 +74,9 @@ export const listRoutes = new Elysia({ prefix: "/api/list" })
 
   .delete(
     "/:id",
-    ({ params }) => {
-      removeFromList(Number(params.id));
-      return { success: true, counts: getStatusCounts() };
+    async ({ params }) => {
+      await removeFromList(Number(params.id));
+      return { success: true, counts: await getStatusCounts() };
     },
     {
       params: t.Object({ id: t.String() }),
