@@ -1,13 +1,12 @@
 services:
   - type: web
     name: anilist-server
-    env: node
-    rootDir: server
-    buildCommand: bun install
-    startCommand: bun run src/index.ts
+    env: docker
+    dockerContext: server
+    dockerfilePath: server/Dockerfile
     disk:
       name: data
-      mountPath: /opt/render/project/src/server/data
+      mountPath: /app/data
       sizeGB: 1
     healthCheckPath: /api/health
     envVars:

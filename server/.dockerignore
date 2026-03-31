@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Database files
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Build output (if any)
+dist/
+build/
+
+# Ignore local environment variables
+.env
+.env.*
+
+# Git
+.git/
+.gitignore
