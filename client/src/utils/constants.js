@@ -1,4 +1,4 @@
-export const API_BASE = '/api';
+export const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 export const STATUSES = {
   watching: { label: 'Watching', color: '#8b1a4a', icon: '' },

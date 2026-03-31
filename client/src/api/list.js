@@ -1,4 +1,4 @@
-const API_BASE = '/api/list';
+const API_BASE = `${import.meta.env.VITE_API_URL || '/api'}/list`;
 
 async function fetchList(endpoint = '', options = {}) {
   const url = `${API_BASE}${endpoint}`;

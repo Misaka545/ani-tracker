@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: anilist-server
+    env: node
+    rootDir: server
+    buildCommand: bun install
+    startCommand: bun run src/index.ts
+    disk:
+      name: data
+      mountPath: /opt/render/project/src/server/data
+      sizeGB: 1
+    healthCheckPath: /api/health
+    envVars:
+      - key: CORS_ORIGIN
+        value: "*"

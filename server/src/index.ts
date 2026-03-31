@@ -7,8 +7,8 @@ import { listRoutes } from "./routes/list";
 const app = new Elysia()
   .use(
     cors({
-      origin: ["http://localhost:5173", "http://localhost:3000"],
-      methods: ["GET", "POST", "PATCH", "DELETE"],
+      origin: process.env.CORS_ORIGIN || "*",
+      methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     })
   )
   .use(animeRoutes)
