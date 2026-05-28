@@ -35,3 +35,5 @@ server/data/
 *.db
 *.db-wal
 *.db-shm
+.vercel
+.env*

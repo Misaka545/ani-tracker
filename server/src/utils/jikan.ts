@@ -1,17 +1,42 @@
 const JIKAN_BASE = "https://api.jikan.moe/v4";
 
 let lastRequestTime = 0;
-const MIN_INTERVAL = 350;
+const MIN_INTERVAL = 350; // Jikan API allows 3 requests/second
+let requestQueue: (() => void)[] = [];
+let isProcessingQueue = false;
 
-async function rateLimitedFetch(url: string): Promise<Response> {
-  const now = Date.now();
-  const elapsed = now - lastRequestTime;
+// Basic in-memory cache to prevent redundant requests
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
 
-  if (elapsed < MIN_INTERVAL) {
-    await new Promise((resolve) => setTimeout(resolve, MIN_INTERVAL - elapsed));
+async function processQueue() {
+  if (isProcessingQueue) return;
+  isProcessingQueue = true;
+
+  while (requestQueue.length > 0) {
+    const resolve = requestQueue.shift();
+    if (resolve) {
+      const now = Date.now();
+      const elapsed = now - lastRequestTime;
+
+      if (elapsed < MIN_INTERVAL) {
+        await new Promise((r) => setTimeout(r, MIN_INTERVAL - elapsed));
+      }
+
+      lastRequestTime = Date.now();
+      resolve();
+    }
   }
 
-  lastRequestTime = Date.now();
+  isProcessingQueue = false;
+}
+
+async function rateLimitedFetch(url: string): Promise<Response> {
+  await new Promise<void>((resolve) => {
+    requestQueue.push(resolve);
+    processQueue();
+  });
+
   return fetch(url);
 }
 
@@ -29,12 +54,38 @@ export async function fetchJikan<T = any>(
     });
   }
 
-  const response = await rateLimitedFetch(url.toString());
+  const cacheKey = url.toString();
+  const cached = cache.get(cacheKey);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Jikan API error ${response.status}: ${errorText}`);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
   }
 
-  return response.json();
+  let retries = 3;
+  let delay = 1000;
+
+  while (retries > 0) {
+    const response = await rateLimitedFetch(url.toString());
+
+    if (response.ok) {
+      const data = await response.json();
+      cache.set(cacheKey, { data, timestamp: Date.now() });
+      return data;
+    }
+
+    if (response.status === 429) {
+      retries--;
+      if (retries === 0) {
+        throw new Error(`Jikan API rate limit exceeded after retries.`);
+      }
+      // Wait before retrying (exponential backoff)
+      await new Promise((r) => setTimeout(r, delay));
+      delay *= 2;
+    } else {
+      const errorText = await response.text();
+      throw new Error(`Jikan API error ${response.status}: ${errorText}`);
+    }
+  }
+
+  throw new Error("Failed to fetch from Jikan API");
 }
