@@ -401,6 +401,23 @@
   color: var(--text-primary);
 }
 
+.navbar-search-wrapper {
+  margin: 0 !important;
+  width: 100%;
+}
+
+.navbar-search-wrapper .search-input {
+  padding: 6px 30px 6px 12px;
+  background: var(--bg-secondary);
+  font-size: 0.8rem;
+}
+
+.navbar-search-wrapper .suggestions-panel {
+  width: 320px;
+  right: 0;
+  left: auto;
+}
+
 /* ---- Suggestions Panel ---- */
 .search-wrapper {
   max-width: 480px;

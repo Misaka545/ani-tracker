@@ -15,6 +15,7 @@ export const animeRoutes = new Elysia({ prefix: "/api/anime" })
         status: query.status,
         rating: query.rating,
         genres: query.genres,
+        sfw: query.sfw,
       });
     },
     {
@@ -28,6 +29,7 @@ export const animeRoutes = new Elysia({ prefix: "/api/anime" })
         status: t.Optional(t.String()),
         rating: t.Optional(t.String()),
         genres: t.Optional(t.String()),
+        sfw: t.Optional(t.String()),
       }),
     }
   )
@@ -40,6 +42,7 @@ export const animeRoutes = new Elysia({ prefix: "/api/anime" })
         page: query.page,
         limit: query.limit || 24,
         type: query.type,
+        sfw: query.sfw,
       });
     },
     {
@@ -48,6 +51,7 @@ export const animeRoutes = new Elysia({ prefix: "/api/anime" })
         page: t.Optional(t.String()),
         limit: t.Optional(t.String()),
         type: t.Optional(t.String()),
+        sfw: t.Optional(t.String()),
       }),
     }
   )

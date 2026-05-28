@@ -8,12 +8,14 @@ export const seasonalRoutes = new Elysia({ prefix: "/api/seasonal" })
       return fetchJikan("/seasons/now", {
         page: query.page,
         limit: query.limit || 24,
+        sfw: query.sfw,
       });
     },
     {
       query: t.Object({
         page: t.Optional(t.String()),
         limit: t.Optional(t.String()),
+        sfw: t.Optional(t.String()),
       }),
     }
   )
@@ -24,6 +26,7 @@ export const seasonalRoutes = new Elysia({ prefix: "/api/seasonal" })
       return fetchJikan(`/seasons/${params.year}/${params.season}`, {
         page: query.page,
         limit: query.limit || 24,
+        sfw: query.sfw,
       });
     },
     {
@@ -34,6 +37,7 @@ export const seasonalRoutes = new Elysia({ prefix: "/api/seasonal" })
       query: t.Object({
         page: t.Optional(t.String()),
         limit: t.Optional(t.String()),
+        sfw: t.Optional(t.String()),
       }),
     }
   );

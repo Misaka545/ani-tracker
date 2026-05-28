@@ -16,32 +16,38 @@ export default function Seasonal({ onAnimeClick, getStatusColor }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let ignore = false;
+    window.scrollTo(0, 0);
+  }, []);
 
-    async function loadSeasonal() {
-      setLoading(true);
-      try {
-        const res = await getSeasonAnime(year, season, page);
-        if (!ignore) {
-          setResults(res.data || []);
-          setPagination(res.pagination);
-        }
-      } catch (err) {
-        if (!ignore) {
-          console.error('Failed to load seasonal:', err);
-          setResults([]);
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
+  useEffect(() => {
+    let ignore = false;
+    setLoading(true);
+
+    const timer = setTimeout(() => {
+      async function loadSeasonal() {
+        try {
+          const res = await getSeasonAnime(year, season, page);
+          if (!ignore) {
+            setResults(res.data?.slice(0, 24) || []);
+            setPagination(res.pagination);
+          }
+        } catch (err) {
+          if (!ignore) {
+            console.error('Failed to load seasonal:', err);
+            setResults([]);
+          }
+        } finally {
+          if (!ignore) {
+            setLoading(false);
+          }
         }
       }
-    }
-
-    loadSeasonal();
+      loadSeasonal();
+    }, 400);
 
     return () => {
       ignore = true;
+      clearTimeout(timer);
     };
   }, [year, season, page]);
 

@@ -20,10 +20,12 @@ export default function Home({ onAnimeClick, getStatusColor }) {
   }, []);
 
   async function loadHomeData() {
+    let topAiringData = [];
     try {
       setLoadingAiring(true);
-      const airingRes = await getTopAnime('airing', 1, 12);
-      setTopAiring(airingRes.data || []);
+      const airingRes = await getTopAnime('airing', 1, 16);
+      topAiringData = airingRes.data?.slice(0, 12) || [];
+      setTopAiring(topAiringData);
       setLoadingAiring(false);
     } catch (err) {
       console.error('Failed to load airing:', err);
@@ -35,7 +37,11 @@ export default function Home({ onAnimeClick, getStatusColor }) {
     try {
       setLoadingSeasonal(true);
       const seasonRes = await getCurrentSeasonAnime(1);
-      setSeasonal(seasonRes.data?.slice(0, 12) || []);
+      
+      const airingIds = new Set(topAiringData.map(a => a.mal_id));
+      const uniqueSeasonal = (seasonRes.data || []).filter(a => !airingIds.has(a.mal_id));
+      
+      setSeasonal(uniqueSeasonal.slice(0, 12));
       setLoadingSeasonal(false);
     } catch (err) {
       console.error('Failed to load seasonal:', err);
@@ -46,8 +52,8 @@ export default function Home({ onAnimeClick, getStatusColor }) {
 
     try {
       setLoadingUpcoming(true);
-      const upcomingRes = await getTopAnime('upcoming', 1, 6);
-      setTopUpcoming(upcomingRes.data || []);
+      const upcomingRes = await getTopAnime('upcoming', 1, 10);
+      setTopUpcoming(upcomingRes.data?.slice(0, 6) || []);
       setLoadingUpcoming(false);
     } catch (err) {
       console.error('Failed to load upcoming:', err);
@@ -68,7 +74,7 @@ export default function Home({ onAnimeClick, getStatusColor }) {
         <section style={{ marginBottom: '48px' }}>
           <div className="section-header">
             <h2 className="section-title">Top Airing</h2>
-            <Link to="/search?filter=airing" className="section-link">
+            <Link to="/search?top=airing" className="section-link">
               View All →
             </Link>
           </div>
@@ -100,6 +106,9 @@ export default function Home({ onAnimeClick, getStatusColor }) {
         <section style={{ marginBottom: '48px' }}>
           <div className="section-header">
             <h2 className="section-title">Most Anticipated</h2>
+            <Link to="/search?top=upcoming" className="section-link">
+              View All →
+            </Link>
           </div>
           <AnimeGrid
             animeList={topUpcoming}

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { searchAnime } from '../api/jikan';
 
-export default function SearchBar({ onSearch, initialValue = '' }) {
+export default function SearchBar({ onSearch, initialValue = '', isNavbar = false }) {
   const [query, setQuery] = useState(initialValue);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -98,7 +98,7 @@ export default function SearchBar({ onSearch, initialValue = '' }) {
   };
 
   return (
-    <div className="search-wrapper" ref={wrapperRef}>
+    <div className={`search-wrapper ${isNavbar ? 'navbar-search-wrapper' : ''}`} ref={wrapperRef}>
       <form onSubmit={handleSubmit}>
         <div className="search-input-container">
           <input

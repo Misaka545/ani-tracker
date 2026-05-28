@@ -1,9 +1,10 @@
 const JIKAN_BASE = "https://api.jikan.moe/v4";
 
-let lastRequestTime = 0;
-const MIN_INTERVAL = 350;
+const MIN_INTERVAL = 340;
 let requestQueue: (() => void)[] = [];
 let isProcessingQueue = false;
+
+let requestTimestamps: number[] = [];
 
 const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 5;
@@ -17,14 +18,27 @@ async function processQueue() {
   while (requestQueue.length > 0) {
     const resolve = requestQueue.shift();
     if (resolve) {
-      const now = Date.now();
+      let now = Date.now();
+      
+      requestTimestamps = requestTimestamps.filter(t => now - t < 60000);
+
+      if (requestTimestamps.length >= 55) {
+        const oldest = requestTimestamps[0];
+        const waitTime = 60000 - (now - oldest);
+        if (waitTime > 0) {
+          await new Promise((r) => setTimeout(r, waitTime));
+        }
+      }
+
+      now = Date.now();
+      const lastRequestTime = requestTimestamps.length > 0 ? requestTimestamps[requestTimestamps.length - 1] : 0;
       const elapsed = now - lastRequestTime;
 
       if (elapsed < MIN_INTERVAL) {
         await new Promise((r) => setTimeout(r, MIN_INTERVAL - elapsed));
       }
 
-      lastRequestTime = Date.now();
+      requestTimestamps.push(Date.now());
       resolve();
     }
   }

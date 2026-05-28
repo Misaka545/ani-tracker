@@ -1,30 +1,39 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import SearchBar from './SearchBar';
 
 export default function Navbar({ listCount, theme, onToggleTheme }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const links = [
     { path: '/', label: 'Home' },
-    { path: '/search', label: 'Search' },
     { path: '/seasonal', label: 'Seasonal' },
     { path: '/mylist', label: 'My List' },
   ];
 
   const isActive = (path) => {
-    if (path === '/') return location.pathname === '/';
+    if (path === '/') return location.pathname === '/' || location.pathname === '/search';
     return location.pathname.startsWith(path);
   };
+
+  const handleSearch = (q) => {
+    navigate(`/search?q=${encodeURIComponent(q)}`);
+    setMenuOpen(false);
+  };
+
+  const currentQuery = location.pathname === '/search' ? (searchParams.get('q') || '') : '';
 
   return (
     <nav className="navbar" id="main-navbar">
       <div className="navbar-inner">
-        <Link to="/" className="navbar-brand">
-          AniTracker
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+          <Link to="/" className="navbar-brand">
+            AniTracker
+          </Link>
 
-        <div className="navbar-right">
           <div className={`navbar-links ${menuOpen ? 'open' : ''}`}>
             {links.map((link) => (
               <Link
@@ -40,6 +49,12 @@ export default function Navbar({ listCount, theme, onToggleTheme }) {
                 )}
               </Link>
             ))}
+          </div>
+        </div>
+
+        <div className="navbar-right">
+          <div className="navbar-search" style={{ width: '260px', marginRight: '8px' }}>
+            <SearchBar onSearch={handleSearch} initialValue={currentQuery} isNavbar={true} />
           </div>
 
           <button

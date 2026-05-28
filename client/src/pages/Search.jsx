@@ -22,24 +22,47 @@ export default function Search({ onAnimeClick, getStatusColor }) {
   const query = searchParams.get('q') || '';
   const genreId = searchParams.get('genres') || '';
   const genreName = searchParams.get('genre_name') || '';
+  const topFilter = searchParams.get('top') || '';
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
 
+  const sfwParam = searchParams.get('sfw');
   const [typeFilter, setTypeFilter] = useState(searchParams.get('type') || '');
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
   const [sortFilter, setSortFilter] = useState(searchParams.get('order_by') || '');
+  const [sfwFilter, setSfwFilter] = useState(sfwParam === 'false' ? false : true);
   const [showFilters, setShowFilters] = useState(false);
 
   const [results, setResults] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Scroll to top when navigating to this page with new params
   useEffect(() => {
-    if (query || genreId || typeFilter || statusFilter || sortFilter) {
+    window.scrollTo(0, 0);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (topFilter) {
+      loadTop(topFilter, currentPage);
+    } else if (query || genreId || typeFilter || statusFilter || sortFilter) {
       performSearch(currentPage);
     } else {
       loadPopular(currentPage);
     }
-  }, [query, genreId, currentPage, typeFilter, statusFilter, sortFilter]);
+  }, [query, genreId, currentPage, typeFilter, statusFilter, sortFilter, topFilter, sfwFilter]);
+
+  async function loadTop(filter, page) {
+    setLoading(true);
+    try {
+      const res = await getTopAnime(filter, page, 24, sfwFilter);
+      setResults(res.data || []);
+      setPagination(res.pagination);
+    } catch (err) {
+      console.error('Failed to load top:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function performSearch(page) {
     setLoading(true);
@@ -52,6 +75,7 @@ export default function Search({ onAnimeClick, getStatusColor }) {
         filters.order_by = sortFilter;
         filters.sort = 'desc';
       }
+      filters.sfw = sfwFilter ? true : '';
       const res = await searchAnime(query || '', page, filters);
       setResults(res.data || []);
       setPagination(res.pagination);
@@ -66,7 +90,7 @@ export default function Search({ onAnimeClick, getStatusColor }) {
   async function loadPopular(page) {
     setLoading(true);
     try {
-      const res = await getTopAnime('bypopularity', page);
+      const res = await getTopAnime('bypopularity', page, 24, sfwFilter);
       setResults(res.data || []);
       setPagination(res.pagination);
     } catch (err) {
@@ -86,15 +110,14 @@ export default function Search({ onAnimeClick, getStatusColor }) {
     if (typeFilter) params.type = typeFilter;
     if (statusFilter) params.status = statusFilter;
     if (sortFilter) params.order_by = sortFilter;
+    if (topFilter) params.top = topFilter;
+    if (!sfwFilter) params.sfw = 'false';
+
     Object.assign(params, overrides);
     Object.keys(params).forEach((k) => {
       if (!params[k]) delete params[k];
     });
     setSearchParams(params);
-  };
-
-  const handleSearch = (q) => {
-    setSearchParams({ q, page: '1' });
   };
 
   const handlePageChange = (page) => {
@@ -117,19 +140,28 @@ export default function Search({ onAnimeClick, getStatusColor }) {
     updateParams({ order_by: v, page: '1' });
   };
 
+  const handleSfwChange = (v) => {
+    const isSfw = v === 'true';
+    setSfwFilter(isSfw);
+    updateParams({ sfw: isSfw ? undefined : 'false', page: '1' });
+  };
+
   const clearAllFilters = () => {
     setTypeFilter('');
     setStatusFilter('');
     setSortFilter('');
+    setSfwFilter(true);
     const params = { page: '1' };
     if (query) params.q = query;
     setSearchParams(params);
   };
 
-  const hasFilters = typeFilter || statusFilter || sortFilter || genreId;
+  const hasFilters = typeFilter || statusFilter || sortFilter || genreId || !sfwFilter;
 
   let title = 'Most Popular';
-  if (query && genreName) title = `"${query}" in ${genreName}`;
+  if (topFilter === 'airing') title = 'Top Airing Anime';
+  else if (topFilter === 'upcoming') title = 'Most Anticipated Anime';
+  else if (query && genreName) title = `"${query}" in ${genreName}`;
   else if (query) title = `Results for "${query}"`;
   else if (genreName) title = genreName;
   else if (hasFilters) title = 'Filtered Results';
@@ -137,7 +169,7 @@ export default function Search({ onAnimeClick, getStatusColor }) {
   return (
     <div className="page" id="search-page">
       <div className="container">
-        <div className="section-header" style={{ marginBottom: '8px' }}>
+        <div className="section-header" style={{ marginBottom: '32px' }}>
           <h1 className="section-title">{title}</h1>
           <button
             className="filter-toggle"
@@ -146,8 +178,6 @@ export default function Search({ onAnimeClick, getStatusColor }) {
             {showFilters ? 'Hide Filters' : 'Filters'}
           </button>
         </div>
-
-        <SearchBar onSearch={handleSearch} initialValue={query} />
 
         {/* Filters */}
         {showFilters && (
@@ -196,6 +226,18 @@ export default function Search({ onAnimeClick, getStatusColor }) {
                     {o.label}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label className="filter-label">Content</label>
+              <select
+                className="filter-select"
+                value={sfwFilter ? 'true' : 'false'}
+                onChange={(e) => handleSfwChange(e.target.value)}
+              >
+                <option value="true">SFW Only</option>
+                <option value="false">All Content (NSFW)</option>
               </select>
             </div>
 
